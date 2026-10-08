@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>Live resultater</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #f1f5f9; color: #172033; }
+    header { background: #0f172a; color: white; padding: 24px max(20px, calc((100vw - 1050px) / 2)); display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: 3px; }
+    .tag { color: #60a5fa; font-size: .75rem; font-weight: 800; letter-spacing: .12em; }
+    #gmt { font-weight: 700; font-variant-numeric: tabular-nums; }
+    main { width: min(1050px, calc(100% - 32px)); margin: 24px auto; display: grid; gap: 18px; }
+    .card { background: white; border: 1px solid #dbe3ee; border-radius: 17px; padding: 22px; box-shadow: 0 8px 22px rgba(15,23,42,.05); }
+    .race { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    #clock { font-size: clamp(2.4rem, 9vw, 5.5rem); line-height: 1; font-weight: 850; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    #status { margin: 10px 0 0; color: #64748b; font-weight: 650; }
+    .live { display: inline-flex; align-items: center; gap: 8px; color: #15803d; font-weight: 800; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 5px #dcfce7; }
+    .paused .dot { background: #f59e0b; box-shadow: 0 0 0 5px #fef3c7; }
+    .heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 13px; }
+    .updated { color: #64748b; font-size: .85rem; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 13px 10px; border-bottom: 1px solid #e2e8f0; }
+    th { color: #64748b; font-size: .8rem; text-transform: uppercase; }
+    td:first-child { font-weight: 850; }
+    .time { font-weight: 850; font-variant-numeric: tabular-nums; }
+    .empty { text-align: center; color: #64748b; padding: 30px 10px 15px; }
+    .note { color: #9a3412; background: #fff7ed; border-radius: 10px; padding: 12px 14px; }
+    footer { text-align: center; color: #64748b; padding: 0 16px 25px; font-size: .87rem; }
+    @media (max-width: 650px) { header, .race, .heading { align-items: stretch; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div><div class="tag">LIVEVISNING</div><h1>Beer Mile</h1></div>
+    <div id="gmt"></div>
+  </header>
+
+  <main>
+    <section class="card race">
+      <div>
+        <div id="clock">00:00:00.000</div>
+        <p id="status">Venter på at løpet skal starte</p>
+      </div>
+      <div id="indicator" class="live paused"><span class="dot"></span><span id="indicatorText">Ikke startet</span></div>
+    </section>
+
+    <section class="card">
+      <div class="heading">
+        <div><div class="tag">RESULTATER</div><h2>Resultatliste</h2></div>
+        <div id="updated" class="updated"></div>
+      </div>
+      <div id="warning" class="note" hidden></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Plass</th><th>Startnr.</th><th>Navn</th><th>Tid</th></tr></thead>
+          <tbody id="results"></tbody>
+        </table>
+        <p id="empty" class="empty">Ingen deltakere er registrert i mål.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>Denne siden er skrivebeskyttet. Ingen tider eller resultater kan endres her.</footer>
+
+  <script>
+    const STORAGE_KEYS = ["lopstidtaker_pause_v1", "lopstidtaker_state_v3", "lopstidtaker_state_v2"];
+    let participants = [];
+
+    const el = {
+      gmt: document.getElementById("gmt"), clock: document.getElementById("clock"),
+      status: document.getElementById("status"), indicator: document.getElementById("indicator"),
+      indicatorText: document.getElementById("indicatorText"), results: document.getElementById("results"),
+      empty: document.getElementById("empty"), updated: document.getElementById("updated"),
+      warning: document.getElementById("warning")
+    };
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+    }
+
+    function formatTime(ms) {
+      ms = Math.max(0, Number(ms) || 0);
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      const x = Math.floor(ms % 1000);
+      return [h,m,s].map(v => String(v).padStart(2,"0")).join(":") + "." + String(x).padStart(3,"0");
+    }
+
+    async function loadParticipants() {
+      try {
+        const response = await fetch("participants.txt?cache=" + Date.now());
+        if (!response.ok) throw new Error();
+        const names = (await response.text()).split(/\r?\n/).map(x => x.trim()).filter(x => x && !x.startsWith("#"));
+        participants = names.map((name, i) => ({ name, bib: i + 1, key: "bib-" + (i + 1) }));
+        el.warning.hidden = true;
+      } catch {
+        el.warning.textContent = "Kunne ikke laste participants.txt.";
+        el.warning.hidden = false;
+      }
+    }
+
+    function readState() {
+      for (const key of STORAGE_KEYS) {
+        try {
+          const value = JSON.parse(localStorage.getItem(key));
+          if (value) return { key, value };
+        } catch {}
+      }
+      return null;
+    }
+
+    function normalize(saved, now) {
+      if (!saved) return { started:false, running:false, elapsed:0, finishes:{} };
+      const s = saved.value;
+      if (saved.key === "lopstidtaker_pause_v1") {
+        const running = s.runningSince !== null && s.runningSince !== undefined;
+        return { started:!!s.started, running, elapsed:(Number(s.elapsed)||0)+(running?now-s.runningSince:0), finishes:s.finishes||{} };
+      }
+      if (saved.key === "lopstidtaker_state_v3") {
+        const running = !!s.runningSince;
+        return { started:!!s.hasStarted, running, elapsed:(Number(s.elapsedMs)||0)+(running?now-s.runningSince:0), finishes:s.finishes||{} };
+      }
+      const running = !!s.startTime && !s.stoppedAt;
+      const end = s.stoppedAt || now;
+      const finishes = {};
+      Object.entries(s.finishes||{}).forEach(([key,value]) => finishes[key] = value - s.startTime);
+      return { started:!!s.startTime, running, elapsed:s.startTime?end-s.startTime:0, finishes };
+    }
+
+    function render() {
+      const now = Date.now();
+      const state = normalize(readState(), now);
+      el.gmt.textContent = new Date(now).toUTCString();
+      el.clock.textContent = formatTime(state.elapsed);
+      el.indicator.classList.toggle("paused", !state.running);
+
+      if (state.running) {
+        el.status.textContent = "Løpet pågår";
+        el.indicatorText.textContent = "Live";
+      } else if (state.started) {
+        el.status.textContent = "Tidtakingen er pauset";
+        el.indicatorText.textContent = "Pauset";
+      } else {
+        el.status.textContent = "Venter på at løpet skal starte";
+        el.indicatorText.textContent = "Ikke startet";
+      }
+
+      const rows = participants
+        .filter(p => state.finishes[p.key] !== undefined)
+        .map(p => ({...p, time:state.finishes[p.key]}))
+        .sort((a,b) => a.time - b.time);
+
+      el.results.innerHTML = rows.map((p,i) => `<tr><td>${i+1}</td><td>${p.bib}</td><td>${escapeHtml(p.name)}</td><td class="time">${formatTime(p.time)}</td></tr>`).join("");
+      el.empty.hidden = rows.length > 0;
+      el.updated.textContent = "Oppdatert " + new Date(now).toLocaleTimeString("nb-NO");
+    }
+
+    loadParticipants().then(render);
+    setInterval(render, 100);
+    setInterval(loadParticipants, 15000);
+    window.addEventListener("storage", render);
+  </script>
+</body>
+</html>
