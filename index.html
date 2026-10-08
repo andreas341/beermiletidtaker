@@ -38,7 +38,7 @@
 </head>
 <body>
   <header>
-    <div><div class="tag">LIVEVISNING</div><h1>Beer Mile</h1></div>
+    <div><div class="tag">LIVEVISNING</div><h1>Beer M<a href="#" id="adminButton" class="admin-button">i</a>le</h1></div>
     <div id="gmt"></div>
   </header>
 
@@ -68,7 +68,20 @@
   </main>
 
   <footer>Denne siden er skrivebeskyttet. Ingen tider eller resultater kan endres her.</footer>
+<script>
+  document.getElementById("adminButton").addEventListener("click", function (event) {
+    event.preventDefault();
 
+    const riktigPassord = "beer2026";
+    const skrevetPassord = prompt("Skriv inn admin-passord:");
+
+    if (skrevetPassord === riktigPassord) {
+      window.location.href = "main.html";
+    } else if (skrevetPassord !== null) {
+      alert("Feil passord.");
+    }
+  });
+</script>
   <script>
     const STORAGE_KEYS = ["lopstidtaker_pause_v1", "lopstidtaker_state_v3", "lopstidtaker_state_v2"];
     let participants = [];
