@@ -1,0 +1,3 @@
+# Ett navn per linje. Linjer som starter med # ignoreres.
+Ola Nordmann
+Kari Nordmann
