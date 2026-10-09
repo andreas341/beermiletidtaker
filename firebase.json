@@ -1,0 +1,4 @@
+{
+  "database": {"rules": "database.rules.json"},
+  "hosting": {"public": ".", "ignore": ["firebase.json", "database.rules.json", "README.md", "**/.*", "**/node_modules/**"], "cleanUrls": false}
+}
