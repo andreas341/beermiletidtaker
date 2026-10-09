@@ -18,7 +18,7 @@ await setPersistence(auth, browserLocalPersistence);
 const $ = id => document.getElementById(id);
 
 let data = { race: { started: false, elapsed: 0, runningSince: null }, participants: {} };
-let databaseLoaded = false;
+let userLoggedIn = false;
 
 const e = {
   gmt: $("gmt"), loginCard: $("loginCard"), adminArea: $("adminArea"),
@@ -52,9 +52,9 @@ function render() {
   e.clock.textContent = fmt(elapsed());
   e.status.textContent = run ? "Tidtakingen pågår" : race.started ? "Pauset. Trykk Fortsett løpet." : "Klar til start";
   e.start.textContent = run ? "Løpet pågår" : race.started ? "Fortsett løpet" : "Start løpet";
-  e.start.disabled = run || !databaseLoaded;
-  e.stop.disabled = !run || !databaseLoaded;
-  e.reset.disabled = !databaseLoaded;
+  e.start.disabled = run || !userLoggedIn;
+  e.stop.disabled = !run || !userLoggedIn;
+  e.reset.disabled = !userLoggedIn;
 
   const q = e.search.value.trim().toLowerCase();
   e.grid.innerHTML = people().filter(p => !q || p.name.toLowerCase().includes(q) || String(p.bib).includes(q)).map(p => {
@@ -68,8 +68,10 @@ function render() {
 }
 
 onAuthStateChanged(auth, user => {
-  e.loginCard.classList.toggle("hidden", Boolean(user));
-  e.adminArea.classList.toggle("hidden", !user);
+  userLoggedIn = Boolean(user);
+  e.loginCard.classList.toggle("hidden", userLoggedIn);
+  e.adminArea.classList.toggle("hidden", !userLoggedIn);
+  render();
 });
 
 e.login.onclick = async () => {
@@ -89,17 +91,15 @@ onValue(ref(db), snapshot => {
   data = value || { race: { started:false, elapsed:0, runningSince:null }, participants:{} };
   data.race ||= { started:false, elapsed:0, runningSince:null };
   data.participants ||= {};
-  databaseLoaded = true;
   render();
 }, error => {
-  databaseLoaded = false;
   e.loginError.textContent = "Databasefeil: " + error.message;
   e.loginError.classList.remove("hidden");
   render();
 });
 
 e.start.onclick = async () => {
-  if (!databaseLoaded) return;
+  if (!userLoggedIn) return;
   if (!data.race?.started) {
     await update(ref(db, "race"), { started:true, elapsed:0, runningSince:Date.now() });
   } else if (!running()) {

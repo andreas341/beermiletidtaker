@@ -110,7 +110,6 @@ onValue(
     if (firebaseData) {
       data = firebaseData;
     } else {
-      // Firebase is empty - initialize with default structure
       data = {
         race: {
           started: false,
@@ -131,5 +130,6 @@ onValue(
   }
 );
 
+// Render every 100ms to keep clock and results fresh
 setInterval(render, 100);
 render();
