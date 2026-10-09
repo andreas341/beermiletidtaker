@@ -9,7 +9,16 @@ import { firebaseConfig } from "./firebase-config.js";
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let data = {
+function loadFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem("tidtaker-data");
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+}
+
+let data = loadFromLocalStorage() || {
   race: {
     started: false,
     elapsed: 0,
@@ -106,14 +115,11 @@ function render() {
 onValue(
   ref(db),
   snapshot => {
-    data = snapshot.val() || {
-      race: {
-        started: false,
-        elapsed: 0,
-        runningSince: null
-      },
-      participants: {}
-    };
+    const firebaseData = snapshot.val();
+    if (firebaseData) {
+      data = firebaseData;
+      localStorage.setItem("tidtaker-data", JSON.stringify(data));
+    }
 
     elements.notice.classList.add("hidden");
     render();

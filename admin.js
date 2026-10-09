@@ -16,7 +16,17 @@ const db = getDatabase(app);
 await setPersistence(auth, browserLocalPersistence);
 
 const $ = id => document.getElementById(id);
-let data = { race: { started: false, elapsed: 0, runningSince: null }, participants: {} };
+
+function loadFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem("tidtaker-data");
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+}
+
+let data = loadFromLocalStorage() || { race: { started: false, elapsed: 0, runningSince: null }, participants: {} };
 let databaseLoaded = false;
 
 const e = {
@@ -46,6 +56,14 @@ function resultList() {
   return people().filter(p => p.finishTime !== null && p.finishTime !== undefined).sort((a,b) => a.finishTime - b.finishTime);
 }
 
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem("tidtaker-data", JSON.stringify(data));
+  } catch (error) {
+    console.warn("Could not save to localStorage:", error);
+  }
+}
+
 function render() {
   const race = data.race || {}, run = running();
   e.clock.textContent = fmt(elapsed());
@@ -58,7 +76,7 @@ function render() {
   const q = e.search.value.trim().toLowerCase();
   e.grid.innerHTML = people().filter(p => !q || p.name.toLowerCase().includes(q) || String(p.bib).includes(q)).map(p => {
     const done = p.finishTime !== null && p.finishTime !== undefined;
-    return `<article class="participant ${done ? "done" : ""}"><div class="person"><span class="bib">${p.bib}</span><b class="name">${esc(p.name)}</b></div>${done ? `<span class="time">${fmt(p.finishTime)}</span>` : `<button class="green" data-finish="${p.id}" ${run ? "" : "disabled"}>I mål</button>`}</article>`;
+    return `<article class="participant ${done ? "done" : ""}"><div class="person"><span class="bib">${p.bib}</span><b class="name">${esc(p.name)}</b></div>${done ? `<span class="time">${fmt(p.finishTime)}</span>` : `<button class="finish" data-finish="${p.id}">Målgang</button>`}</article>`;
   }).join("");
 
   const rows = resultList();
@@ -70,6 +88,7 @@ onAuthStateChanged(auth, user => {
   e.loginCard.classList.toggle("hidden", Boolean(user));
   e.adminArea.classList.toggle("hidden", !user);
 });
+
 e.login.onclick = async () => {
   try {
     await signInWithEmailAndPassword(auth, e.email.value, e.password.value);
@@ -79,6 +98,7 @@ e.login.onclick = async () => {
     e.loginError.classList.remove("hidden");
   }
 };
+
 e.logout.onclick = () => signOut(auth);
 
 onValue(ref(db), snapshot => {
@@ -87,6 +107,7 @@ onValue(ref(db), snapshot => {
   data.race ||= { started:false, elapsed:0, runningSince:null };
   data.participants ||= {};
   databaseLoaded = true;
+  saveToLocalStorage();
   render();
 }, error => {
   databaseLoaded = false;
@@ -103,24 +124,29 @@ e.start.onclick = async () => {
     await update(ref(db, "race"), { runningSince:Date.now() });
   }
 };
+
 e.stop.onclick = async () => {
   if (!running()) return;
   await update(ref(db, "race"), { elapsed:elapsed(), runningSince:null });
 };
+
 e.reset.onclick = async () => {
   if (!confirm("Slette løpet og alle målgangstider?")) return;
   const changes = { race:{ started:false, elapsed:0, runningSince:null } };
   people().forEach(p => changes[`participants/${p.id}/finishTime`] = null);
   await update(ref(db), changes);
 };
+
 e.grid.onclick = async event => {
   const button = event.target.closest("[data-finish]");
   if (button && running()) await set(ref(db, `participants/${button.dataset.finish}/finishTime`), elapsed());
 };
+
 e.results.onclick = async event => {
   const button = event.target.closest("[data-undo]");
   if (button) await set(ref(db, `participants/${button.dataset.undo}/finishTime`), null);
 };
+
 e.search.oninput = render;
 
 e.file.onchange = async () => {
