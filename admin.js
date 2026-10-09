@@ -17,16 +17,7 @@ await setPersistence(auth, browserLocalPersistence);
 
 const $ = id => document.getElementById(id);
 
-function loadFromLocalStorage() {
-  try {
-    const saved = localStorage.getItem("tidtaker-data");
-    return saved ? JSON.parse(saved) : null;
-  } catch {
-    return null;
-  }
-}
-
-let data = loadFromLocalStorage() || { race: { started: false, elapsed: 0, runningSince: null }, participants: {} };
+let data = { race: { started: false, elapsed: 0, runningSince: null }, participants: {} };
 let databaseLoaded = false;
 
 const e = {
@@ -54,14 +45,6 @@ function elapsed(now = Date.now()) {
 function people() { return Object.values(data.participants || {}).sort((a,b) => a.bib - b.bib); }
 function resultList() {
   return people().filter(p => p.finishTime !== null && p.finishTime !== undefined).sort((a,b) => a.finishTime - b.finishTime);
-}
-
-function saveToLocalStorage() {
-  try {
-    localStorage.setItem("tidtaker-data", JSON.stringify(data));
-  } catch (error) {
-    console.warn("Could not save to localStorage:", error);
-  }
 }
 
 function render() {
@@ -107,7 +90,6 @@ onValue(ref(db), snapshot => {
   data.race ||= { started:false, elapsed:0, runningSince:null };
   data.participants ||= {};
   databaseLoaded = true;
-  saveToLocalStorage();
   render();
 }, error => {
   databaseLoaded = false;
