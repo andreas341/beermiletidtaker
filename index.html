@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beer Mile – live tidtaking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>RUKA26 Beer Mile</h1>
+    <span id="indicator" class="pill idle">Ikke startet</span>
+  </header>
+  <main class="wrap">
+    <section class="board" aria-live="polite">
+      <div id="clock" class="clock">00:00:00.000</div>
+      <p id="status" class="status">Venter på start</p>
+    </section>
+
+    <div id="notice" class="notice hidden" role="alert"></div>
+
+    <section class="card">
+      <h2>Har startet</h2>
+      <table>
+        <thead><tr><th>Nr</th><th>Navn</th><th>Starttid</th><th>Klokkeslett</th><th class="r">Status</th></tr></thead>
+        <tbody id="started"></tbody>
+      </table>
+      <p id="startedEmpty" class="muted">Ingen har startet ennå.</p>
+    </section>
+
+    <section class="card">
+      <h2>Resultater</h2>
+      <table>
+        <thead><tr><th>Plass</th><th>Nr</th><th>Navn</th><th class="r">Tid</th></tr></thead>
+        <tbody id="results"></tbody>
+      </table>
+      <p id="empty" class="muted">Ingen i mål ennå.</p>
+    </section>
+
+    <footer class="foot"><span id="conn">Kobler til …</span></footer>
+  </main>
+  <script type="module" src="live.js"></script>
+</body>
+</html>

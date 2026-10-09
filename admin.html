@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beer Mile – admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>RUKA26 Beer Mile: admin</h1>
+    <a href="index.html">Se livevisning</a>
+  </header>
+  <main class="wrap">
+    <div id="msg" class="notice hidden" role="alert"></div>
+
+    <section id="loginCard" class="card">
+      <h2>Logg inn</h2>
+      <label>E-post <input id="email" type="email" autocomplete="username"></label>
+      <label>Passord <input id="password" type="password" autocomplete="current-password"></label>
+      <button id="login" class="btn primary">Logg inn</button>
+    </section>
+
+    <div id="adminArea" class="hidden">
+      <section class="board">
+        <div id="clock" class="clock">00:00:00.000</div>
+        <p id="status" class="status">Klar til start</p>
+        <div class="actions">
+          <button id="start" class="btn primary">Start løpet</button>
+          <button id="stop" class="btn">Pause</button>
+          <button id="reset" class="btn danger">Nullstill</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Start og målgang</h2>
+        <button id="startAll" class="btn primary">Start alle</button>
+        <input id="search" type="search" placeholder="Søk på navn eller nummer">
+        <div id="grid" class="grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>Resultater</h2>
+        <table>
+          <thead><tr><th>Plass</th><th>Nr</th><th>Navn</th><th class="r">Tid</th><th></th></tr></thead>
+          <tbody id="results"></tbody>
+        </table>
+        <p id="empty" class="muted">Ingen i mål ennå.</p>
+        <div class="actions">
+          <button id="export" class="btn">Last ned CSV</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Deltakere</h2>
+        <p class="muted">Last opp en tekstfil med ett navn per linje. Dette erstatter listen og nullstiller løpet.</p>
+        <input id="file" type="file" accept=".txt,text/plain">
+        <h3>Legg til deltaker manuelt</h3>
+        <div class="addrow">
+          <input id="newName" placeholder="Navn" autocomplete="off">
+          <button id="addPerson" class="btn primary">Legg til</button>
+        </div>
+        <p class="muted">Får neste ledige startnummer. Kan brukes også etter at løpet har startet.</p>
+      </section>
+
+      <button id="logout" class="btn">Logg ut</button>
+    </div>
+  </main>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
