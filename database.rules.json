@@ -1,6 +1,6 @@
 {
   "rules": {
     ".read": true,
-    ".write": "auth != null && auth.uid === 'LIM_INN_ADMIN_UID'"
+    ".write": "auth != null && auth.uid === 'GhMB0PhO3GeBBTaOMczEZeoa5Ph1'"
   }
 }
