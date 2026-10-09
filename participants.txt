@@ -1,6 +1,0 @@
-# Ett navn per linje. Startnummer følger rekkefølgen.
-Ola Nordmann
-Kari Nordmann
-Anne Hansen
-Per Johansen
-ANNE
