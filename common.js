@@ -5,7 +5,9 @@ import { firebaseConfig } from "./firebase-config.js";
 export const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 export { ref, onValue, set, update };
-
+export function hasStarted(race) {
+return Boolean(race.started);
+}
 // Felles tid: Firebase-serverens klokke, slik at alle enheter viser samme tid
 let offset = 0;
 onValue(ref(db, ".info/serverTimeOffset"), s => { offset = s.val() || 0; });
