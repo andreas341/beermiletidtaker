@@ -16,7 +16,7 @@ export const serverNow = () => Date.now() + offset;
 export function onConnection(cb) {
   onValue(ref(db, ".info/connected"), s => cb(Boolean(s.val())));
 }
-
+export const netTime = serverNow;
 export function fmt(ms) {
   ms = Math.max(0, Number(ms) || 0);
   const h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000);
