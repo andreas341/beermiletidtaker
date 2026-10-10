@@ -61,6 +61,10 @@ watch(d => { data = d; render(); }, err => showMsg("Databasefeil: " + err.messag
 $("start").onclick = () => run(() => data.race.started
   ? update(ref(db, "race"), { runningSince: serverNow() })
   : update(ref(db, "race"), { started: true, elapsed: 0, runningSince: serverNow() }));
+  const t = elapsed(data.race), at = serverNow(), changes = {};
+    people().filter(p => !hasStarted(p)).forEach(p => {
+      changes[`participants/${p.id}/startTime`] = t;
+      changes[`participants/${p.id}/startedAt`] = at;
 
 $("stop").onclick = () => run(() =>
   update(ref(db, "race"), { elapsed: elapsed(data.race), runningSince: null }));
